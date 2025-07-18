@@ -1,0 +1,27 @@
+[
+  {
+    "title": "Message from the Future",
+    "content": "Greetings from the year 2050! The world has changed in ways you",
+    "received": "1 day ago"
+  },
+  {
+    "title": "Weekly Update",
+    "content": "This week's highlights include advancements in AI and renewable energy.",
+    "received": "2 days ago"
+  },
+  {
+    "title": "Event Reminder",
+    "content": "Don't forget about the upcoming tech conference next week!",
+    "received": "3 days ago"
+  },
+  {
+    "title": "Newsletter Subscription",
+    "content": "Thank you for subscribing to our monthly newsletter!",
+    "received": "5 days ago"
+  },
+  {
+    "title": "Feedback Request",
+    "content": "We value your feedback. Please take a moment to fill out our survey.",
+    "received": "1 week ago"
+  }
+]
