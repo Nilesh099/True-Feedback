@@ -28,11 +28,7 @@ const Page = () => {
   const [usernameMessage, setUsernameMessage] = useState("");
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const debounced = useDebounceCallback(setUsername, 500);
   const router = useRouter();
-//   const { toast } = useToast();
-
-  // zod implementation
 
   const form = useForm<z.infer<typeof signUpSchema>>({
     resolver: zodResolver(signUpSchema),
@@ -41,7 +37,17 @@ const Page = () => {
       email: "",
       password: "",
     },
+    mode: "onChange",
   });
+
+  // Watch the username field from the form instead of separate state
+  const watchedUsername = form.watch("username");
+  const debounced = useDebounceCallback(setUsername, 500);
+
+  useEffect(() => {
+    // Update the separate username state when form value changes
+    debounced(watchedUsername || "");
+  }, [watchedUsername, debounced]);
 
   useEffect(() => {
     const checkUsernameUnique = async () => {
@@ -50,16 +56,14 @@ const Page = () => {
         setUsernameMessage("");
         try {
           const response = await axios.get(
-            `api/check-username-unique?username=${username}`
+            `/api/check-username-unique?username=${username}`
           );
-          console.log("Username check response:", response.data.message);
-          
           setUsernameMessage(response.data.message);
         } catch (error) {
           const axiosError = error as AxiosError<ApiResponse>;
           setUsernameMessage(
             axiosError.response?.data.message ||
-              "An error occurred while checking username uniqueness"
+              "An error occurred while checking username"
           );
         } finally {
           setIsCheckingUsername(false);
@@ -74,93 +78,146 @@ const Page = () => {
     try {
       const response = await axios.post<ApiResponse>("/api/sign-up", data);
       toast.success(response.data.message);
-      router.replace(`/verify/${username}`);
-      setIsSubmitting(false);
+      router.replace(`/verify/${data.username}`);
     } catch (error) {
-      console.error("Error during sign up:", error);
       const axiosError = error as AxiosError<ApiResponse>;
-      const errorMessage = axiosError.response?.data.message;
-      toast.error(errorMessage || "Signup failed");
+      toast.error(
+        axiosError.response?.data.message || "Signup failed. Try again."
+      );
+    } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100">
-      <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md">
-        <div className="text-center font-bold text-3xl mb-6">Sign Up</div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1e1e2f] via-[#2d2f55] to-[#1e1e2f] px-4">
+      <div className="w-full max-w-md bg-white/10 backdrop-blur-lg border border-white/20 p-8 rounded-3xl shadow-2xl animate-fade-in">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-400 to-indigo-400">
+            Create Account
+          </h1>
+          <p className="text-sm text-gray-300 mt-2">
+            Join the anonymous feedback revolution
+          </p>
+        </div>
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Username */}
             <FormField
               name="username"
               control={form.control}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Username</FormLabel>
+                  <FormLabel className="font-medium text-gray-200">
+                    Username
+                  </FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="username"
+                      placeholder="unique_username"
                       {...field}
+                      value={field.value || ""}
                       onChange={(e) => {
                         field.onChange(e);
-                        debounced(e.target.value);
                       }}
+                      className="rounded-xl bg-white/20 text-white placeholder:text-gray-400 border border-white/30 focus:ring-2 focus:ring-purple-400"
                     />
                   </FormControl>
-                    {isCheckingUsername && <Loader2 className="animate-spin" />}
-                    <p className={`text-sm ${usernameMessage==="Username is Unique" ? "text-green-500" : "text-red-500"}`}>
-                        {usernameMessage}
-                    </p>
 
+                  <div className="mt-1 flex items-center gap-2 text-sm">
+                    {isCheckingUsername && (
+                      <Loader2 className="h-4 w-4 animate-spin text-gray-300" />
+                    )}
+                    {usernameMessage && (
+                      <span
+                        className={`${
+                          usernameMessage === "Username is Unique"
+                            ? "text-green-400"
+                            : "text-red-400"
+                        }`}
+                      >
+                        {usernameMessage}
+                      </span>
+                    )}
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            {/* Email */}
             <FormField
               name="email"
               control={form.control}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel className="font-medium text-gray-200">
+                    Email
+                  </FormLabel>
                   <FormControl>
-                    <Input placeholder="email" {...field} />
+                    <Input
+                      type="email"
+                      placeholder="you@email.com"
+                      {...field}
+                      value={field.value || ""}
+                      className="rounded-xl bg-white/20 text-white placeholder:text-gray-400 border border-white/30 focus:ring-2 focus:ring-purple-400"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            {/* Password */}
             <FormField
               name="password"
               control={form.control}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel className="font-medium text-gray-200">
+                    Password
+                  </FormLabel>
                   <FormControl>
-                    <Input placeholder="password" {...field} type="password" />
+                    <Input
+                      type="password"
+                      placeholder="••••••••"
+                      {...field}
+                      value={field.value || ""}
+                      className="rounded-xl bg-white/20 text-white placeholder:text-gray-400 border border-white/30 focus:ring-2 focus:ring-purple-400"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button type="submit" disabled={isSubmitting}>
+
+            {/* Submit */}
+            <Button
+              type="submit"
+              className="w-full h-11 rounded-xl font-bold text-white bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 hover:opacity-90 transition"
+              disabled={isSubmitting || isCheckingUsername}
+            >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Please wait
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Signing up...
                 </>
               ) : (
-                "Signup"
+                "Sign Up"
               )}
             </Button>
           </form>
         </Form>
-        <div className="text-center mt-4">
-          <p>
-            Already a member?{" "}
-            <Link href="/sign-in" className="text-blue-600 hover:text-blue-800">
-              Sign in
-            </Link>
-          </p>
+
+        {/* Bottom Link */}
+        <div className="text-center mt-6 text-sm text-gray-300">
+          Already have an account?{" "}
+          <Link
+            href="/sign-in"
+            className="text-purple-300 font-medium hover:underline"
+          >
+            Sign in
+          </Link>
         </div>
       </div>
     </div>
