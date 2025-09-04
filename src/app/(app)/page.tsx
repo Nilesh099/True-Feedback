@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 
 import React from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -31,7 +32,7 @@ const Home = () => {
           </h1>
           <p className="mt-4 text-lg md:text-xl text-gray-700 max-w-xl mx-auto">
             Explore{" "}
-            <span className="font-semibold text-purple-700">Mystery Message</span>{" "}
+            <span className="font-semibold text-purple-700">Anonymous Message</span>{" "}
             — Where your identity stays hidden and your voice is heard.
           </p>
         </section>
@@ -47,9 +48,11 @@ const Home = () => {
                 <div className="p-3">
                   <Card className="backdrop-blur-lg bg-white/60 shadow-xl rounded-2xl overflow-hidden transition-transform hover:scale-105">
                     {/* Image section */}
-                    <img
+                    <Image
                       src={localImages[index % localImages.length].src}
                       alt={`Slide ${index + 1}`}
+                      width={800}
+                      height={400}
                       className="w-full h-full object-cover"
                     />
                     {/* Text section */}
