@@ -2,6 +2,8 @@ import dbConnect from "@/lib/dbConnect";
 import UserModel from "@/model/User";
 import bcrypt from "bcryptjs";
 import { sendVerificationEmail } from "@/helpers/semdVerificationEmail";
+import { signUpSchema } from "@/schemas/signUpSchema";
+import { ZodError } from "zod";
 
 export async function POST(request: Request) {
   try {
@@ -9,20 +11,33 @@ export async function POST(request: Request) {
     await dbConnect();
     console.log("Database connection established");
     
-    const { username, email, password } = await request.json();
-    console.log("Received sign-up request for:", { username, email });
+    const requestData = await request.json();
+    console.log("Received sign-up data:", requestData);
     
-    // Validate required fields
-    if (!username || !email || !password) {
-      console.log("Missing required fields:", { username: !!username, email: !!email, password: !!password });
-      return Response.json(
-        {
-          success: false,
-          message: "All fields are required",
-        },
-        { status: 400 }
-      );
+    // Validate with Zod schema
+    try {
+      const validatedData = signUpSchema.parse(requestData);
+      const { username, email, password } = validatedData;
+      console.log("Validation passed for:", { username, email });
+    } catch (validationError) {
+      if (validationError instanceof ZodError) {
+        console.error("Validation failed:", validationError.errors);
+        return Response.json(
+          {
+            success: false,
+            message: "Invalid data provided",
+            errors: validationError.errors.map(e => ({
+              field: e.path.join('.'),
+              message: e.message
+            }))
+          },
+          { status: 400 }
+        );
+      }
+      throw validationError;
     }
+    
+    const { username, email, password } = requestData;
     
     const existingUserVerifiedByUsername = await UserModel.findOne({
       username,

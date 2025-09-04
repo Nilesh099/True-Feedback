@@ -5,7 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 import {
   Form,
   FormControl,
@@ -21,8 +20,6 @@ import { signInSchema } from "@/schemas/signInSchema";
 import { signIn } from "next-auth/react";
 
 const Page = () => {
-  const router = useRouter();
-
   const form = useForm<z.infer<typeof signInSchema>>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
@@ -33,23 +30,35 @@ const Page = () => {
   });
 
   const onSubmit = async (data: z.infer<typeof signInSchema>) => {
-    const result = await signIn("credentials", {
-      redirect: false,
-      identifier: data.identifier,
-      password: data.password,
-    });
+    try {
+      console.log("Signing in with:", data.identifier);
+      
+      const result = await signIn("credentials", {
+        redirect: false,
+        identifier: data.identifier,
+        password: data.password,
+      });
 
-    if (result?.error) {
-      toast.error(
-        result.error === "CredentialsSignin"
-          ? "Incorrect username or password"
-          : result.error
-      );
-      return;
-    }
+      console.log("Sign-in result:", result);
 
-    if (result?.url) {
-      router.replace("/dashboard");
+      if (result?.error) {
+        console.error("Sign-in error:", result.error);
+        toast.error(
+          result.error === "CredentialsSignin"
+            ? "Incorrect username or password"
+            : result.error
+        );
+        return;
+      }
+
+      if (result?.ok) {
+        toast.success("Sign in successful");
+        // Force hard navigation to dashboard to ensure session is loaded
+        window.location.href = "/dashboard";
+      }
+    } catch (error) {
+      console.error("Sign-in exception:", error);
+      toast.error("An unexpected error occurred during sign in");
     }
   };
 

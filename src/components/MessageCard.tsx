@@ -30,14 +30,23 @@ import { toast } from "sonner";
 
 type MessageCardProps = {
   message: Message;
+  onMessageDelete?: (messageId: string) => void;
 };
 
-const MessageCard = ({ message }: MessageCardProps) => {
+const MessageCard = ({ message, onMessageDelete }: MessageCardProps) => {
   const handleDeleteConfirm = async () => {
-    const response = await axios.delete<ApiResponse>(
-      `/api/delete-message/${message._id}`
-    );
-    toast(response.data.message);
+    try {
+      const response = await axios.delete<ApiResponse>(
+        `/api/delete-message/${message._id}`
+      );
+      toast(response.data.message);
+      if (onMessageDelete && message._id) {
+        onMessageDelete(message._id.toString());
+      }
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      toast.error('Failed to delete message');
+    }
   };
 
   return (

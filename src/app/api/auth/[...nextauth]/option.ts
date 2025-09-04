@@ -3,7 +3,15 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import dbConnect from "@/lib/dbConnect";
 import UserModel from "@/model/User";
-import type { User } from "@/model/User";
+
+// Define the shape of the custom user data returned from auth
+type CustomUser = {
+  id: string;
+  email: string;
+  username: string;
+  isVerified: boolean;
+  isAcceptingMessage: boolean;
+}
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -11,13 +19,13 @@ export const authOptions: NextAuthOptions = {
       id: "credentials",
       name: "Credentials",
       credentials: {
-        email: { label: "Email", type: "text" },
+        identifier: { label: "Email or Username", type: "text" },
         password: { label: "Password", type: "password" },
       },
-  async authorize(credentials: Record<"email" | "password", string> | undefined): Promise<User | null> {
+      async authorize(credentials: Record<"identifier" | "password", string> | undefined) {
         await dbConnect();
         try {
-          const emailOrUsername = credentials?.email;
+          const emailOrUsername = credentials?.identifier;
           const password = credentials?.password;
           if (!emailOrUsername || !password) {
             throw new Error("Missing credentials");
@@ -27,9 +35,7 @@ export const authOptions: NextAuthOptions = {
               { email: emailOrUsername },
               { username: emailOrUsername },
             ],
-          }).lean();
-
-          if (!user) {
+          }).lean();          if (!user) {
             throw new Error("No user found");
           }
 
@@ -60,9 +66,9 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token._id = user._id?.toString();
+        token._id = user.id;
         token.isVerified = user.isVerified;
-        token.isAcceptingMessages = user.isAcceptingMessages;
+        token.isAcceptingMessage = user.isAcceptingMessage;
         token.username = user.username;
       }
       return token;
@@ -70,8 +76,8 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
         if(token) {
             session.user._id = token._id
-            session.user.isVerified= token.isVerified
-            session.user.isAcceptingMessages = token.isAcceptingMessages
+            session.user.isVerified = token.isVerified
+            session.user.isAcceptingMessage = token.isAcceptingMessage
             session.user.username = token.username  
         }
       return session;

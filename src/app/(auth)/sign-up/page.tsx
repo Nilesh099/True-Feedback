@@ -76,11 +76,18 @@ const Page = () => {
   const onSubmit = async (data: z.infer<typeof signUpSchema>) => {
     setIsSubmitting(true);
     try {
+      console.log("Submitting data:", data);
+      if (!data.username || !data.email || !data.password) {
+        toast.error("All fields are required");
+        return;
+      }
+      
       const response = await axios.post<ApiResponse>("/api/sign-up", data);
       toast.success(response.data.message);
       router.replace(`/verify/${data.username}`);
     } catch (error) {
       const axiosError = error as AxiosError<ApiResponse>;
+      console.error("Sign-up error:", axiosError.response?.data || axiosError.message);
       toast.error(
         axiosError.response?.data.message || "Signup failed. Try again."
       );
