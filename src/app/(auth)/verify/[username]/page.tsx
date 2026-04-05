@@ -34,8 +34,13 @@ const VerifyAccount = () => {
         code: data.code,
       });
 
+<<<<<<< Updated upstream
   toast.success(`Success: ${response.data.message}`);
   router.replace("/dashboard");
+=======
+      toast.success(`Success: ${response.data.message}`);
+      router.replace("/sign-in");
+>>>>>>> Stashed changes
     } catch (error: unknown) {
       let message = "An unexpected error occurred";
 

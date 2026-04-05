@@ -20,6 +20,8 @@ import { signInSchema } from "@/schemas/signInSchema";
 import { signIn } from "next-auth/react";
 
 const Page = () => {
+  const router = useRouter();
+
   const form = useForm<z.infer<typeof signInSchema>>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
@@ -30,26 +32,20 @@ const Page = () => {
   });
 
   const onSubmit = async (data: z.infer<typeof signInSchema>) => {
-    try {
-      console.log("Signing in with:", data.identifier);
-      
-      const result = await signIn("credentials", {
-        redirect: false,
-        identifier: data.identifier,
-        password: data.password,
-      });
+    const result = await signIn("credentials", {
+      redirect: false,
+      identifier: data.identifier,
+      password: data.password,
+    });
 
-      console.log("Sign-in result:", result);
-
-      if (result?.error) {
-        console.error("Sign-in error:", result.error);
-        toast.error(
-          result.error === "CredentialsSignin"
-            ? "Incorrect username or password"
-            : result.error
-        );
-        return;
-      }
+    if (result?.error) {
+      toast.error(
+        result.error === "CredentialsSignin"
+          ? "Incorrect username or password"
+          : result.error
+      );
+      return;
+    }
 
       if (result?.ok) {
         toast.success("Sign in successful");
